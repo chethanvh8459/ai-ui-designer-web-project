@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'signup_screen.dart';
 import 'home_screen.dart';
 import 'forgot_password_screen.dart';
+import '../utils/api.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -99,12 +100,8 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => isLoading = true);
 
     try {
-      final response = await http
-          .post(
-            Uri.parse('http://127.0.0.1:5000/api/auth/login'),
-            headers: {"Content-Type": "application/json"},
-            body: jsonEncode({"email": email, "password": password}),
-          )
+      final response = await ApiClient()
+          .post('/api/auth/login', body: {"email": email, "password": password})
           .timeout(const Duration(seconds: 10));
 
       var data = jsonDecode(response.body);

@@ -40,6 +40,23 @@
    "templates": "Browse Templates",
   "yourProjects": "Your Projects",
   "welcome": "Welcome  👋",
-  "headerSubtitle": "Design smarter with AI"
+  "headerSubtitle": "Design smarter with AI",
+  
+  "codeEditor": "Code Editor",
+  "copyCode": "Copy Code",
+  "clear": "Clear",
+  "writeCode": "Write your code here. You can copy it to use later.",
+  "editorFileName": "editor.dart",
+  "selectLanguage": "Select Language",
+  "darkMode": "Dark Mode",
+  "lightMode": "Light Mode",
+  "language": "Language",
+  "chatbotWelcome": "Hello! 👋 I'm your AI design assistant. I can help you with UI/UX design, Flutter code, and project ideas. What would you like to know?",
+  "clearCode": "Code cleared!",
+  "codeCopied": "Code copied to clipboard!",
+  "clearChat": "Clear Chat",
+  "noProjects": "No Projects Yet",
+  "createYourFirst": "Create your first project",
+  "tooltip": "Tooltip"
 
 }

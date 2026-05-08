@@ -40,7 +40,23 @@
    "templates": "टेम्पलेट्स देखें",
   "yourProjects": "आपके प्रोजेक्ट्स",
   "welcome": " स्वागत है 👋",
-  "headerSubtitle": "AI के साथ बेहतर डिज़ाइन करें"
-
+  "headerSubtitle": "AI के साथ बेहतर डिज़ाइन करें",
+  
+  "codeEditor": "कोड एडिटर",
+  "copyCode": "कोड कॉपी करें",
+  "clear": "साफ़ करें",
+  "writeCode": "अपना कोड यहाँ लिखें। आप इसे बाद में उपयोग करने के लिए कॉपी कर सकते हैं।",
+  "editorFileName": "editor.dart",
+  "selectLanguage": "भाषा चुनें",
+  "darkMode": "डार्क मोड",
+  "lightMode": "लाइट मोड",
+  "language": "भाषा",
+  "chatbotWelcome": "नमस्ते! 👋 मैं आपका AI डिज़ाइन सहायक हूँ। मैं आपको UI/UX डिज़ाइन, Flutter कोड, और प्रोजेक्ट आइडिया में मदद कर सकता हूँ। आप क्या जानना चाहते हैं?",
+  "clearCode": "कोड साफ़ हो गया!",
+  "codeCopied": "कोड क्लिपबोर्ड पर कॉपी हो गया!",
+  "clearChat": "चैट साफ़ करें",
+  "noProjects": "अभी कोई प्रोजेक्ट नहीं",
+  "createYourFirst": "अपना पहला प्रोजेक्ट बनाएं",
+  "tooltip": "सुझाव"
 
 }

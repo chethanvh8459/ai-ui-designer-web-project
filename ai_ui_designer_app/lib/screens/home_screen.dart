@@ -11,6 +11,7 @@ import 'code_viewer_screen.dart';
 import 'profile_screen.dart';
 import 'chatbot_screen.dart';
 import 'create_project_screen.dart';
+import '../utils/api.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -87,9 +88,7 @@ class _HomeScreenState extends State<HomeScreen>
         return;
       }
 
-      final response = await http.get(
-        Uri.parse('http://127.0.0.1:5000/api/design/projects/$email'),
-      );
+      final response = await ApiClient().get('/api/design/projects/$email');
 
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
@@ -132,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen>
             position: _slideAnimation,
             child: CustomScrollView(
               slivers: [
-                // Modern App Bar
+                // Modern App Bar with Three Dot Menu
                 SliverAppBar(
                   expandedHeight: 100,
                   floating: true,
@@ -197,70 +196,114 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                   ),
                   actions: [
-                    Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.grey.shade800 : Colors.white,
+                    // Three Dot Menu Button
+                    PopupMenuButton<String>(
+                      icon: Icon(
+                        Icons.more_vert,
+                        color: isDark ? Colors.white70 : Colors.grey.shade700,
+                        size: 20,
+                      ),
+                      offset: const Offset(0, 45),
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: IconButton(
-                        icon: Icon(
-                          isDark ? Icons.light_mode : Icons.dark_mode,
-                          color: isDark ? Colors.amber.shade400 : primaryColor,
-                          size: 20,
-                        ),
-                        onPressed: () => themeProvider.toggleTheme(!isDark),
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.grey.shade800 : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: PopupMenuButton<Locale>(
-                        icon: Icon(
-                          Icons.language,
-                          color: isDark ? Colors.white70 : Colors.grey.shade700,
-                          size: 20,
-                        ),
-                        onSelected: (Locale locale) =>
-                            MyApp.setLocale(context, locale),
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(
-                            value: Locale('en'),
-                            child: Text('English'),
-                          ),
-                          PopupMenuItem(
-                            value: Locale('hi'),
-                            child: Text('हिंदी'),
-                          ),
-                          PopupMenuItem(
-                            value: Locale('kn'),
-                            child: Text('ಕನ್ನಡ'),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(right: 16),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.grey.shade800 : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.person_outline,
-                          color: isDark ? Colors.white70 : Colors.grey.shade700,
-                          size: 20,
-                        ),
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ProfileScreen(),
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      elevation: 4,
+                      onSelected: (value) async {
+                        switch (value) {
+                          case 'dark_mode':
+                            themeProvider.toggleTheme(!isDark);
+                            break;
+                          case 'language':
+                            _showLanguageDialog(context, isDark);
+                            break;
+                          case 'profile':
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ProfileScreen(),
+                              ),
+                            );
+                            break;
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem<String>(
+                          value: 'dark_mode',
+                          child: Row(
+                            children: [
+                              Icon(
+                                isDark ? Icons.light_mode : Icons.dark_mode,
+                                color: isDark
+                                    ? Colors.amber.shade400
+                                    : primaryColor,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                isDark ? 'Light Mode' : 'Dark Mode',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
+                        PopupMenuItem<String>(
+                          value: 'language',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.language,
+                                color: isDark
+                                    ? Colors.white70
+                                    : Colors.grey.shade700,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Language',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'profile',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                color: isDark
+                                    ? Colors.white70
+                                    : Colors.grey.shade700,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Profile',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -283,23 +326,19 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         const SizedBox(height: 24),
 
-                        // Stats Row - Redesigned as horizontal scroll
+                        // Stats Row
                         _buildStatsRow(t, isDark),
                         const SizedBox(height: 32),
 
-                        // Quick Actions
+                        // Quick Actions (Only Create and Code)
                         _buildQuickActionsSection(t, isDark),
                         const SizedBox(height: 32),
 
-                        // Services Section
-                        _buildServicesSection(t, isDark),
-                        const SizedBox(height: 32),
-
-                        // Templates Section
+                        // Templates Section (without View All button)
                         _buildTemplatesSection(t, isDark),
                         const SizedBox(height: 32),
 
-                        // Projects Section
+                        // Projects Section (without See All button)
                         _buildProjectsSection(t, isDark),
                         const SizedBox(height: 80),
                       ],
@@ -320,6 +359,106 @@ class _HomeScreenState extends State<HomeScreen>
         elevation: 4,
         child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
       ),
+    );
+  }
+
+  void _showLanguageDialog(BuildContext context, bool isDark) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.language, color: primaryColor, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                'Select Language',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildLanguageOption(
+                context: context,
+                flag: '🇺🇸',
+                language: 'English',
+                locale: const Locale('en'),
+                isDark: isDark,
+              ),
+              _buildLanguageOption(
+                context: context,
+                flag: '🇮🇳',
+                language: 'हिंदी',
+                locale: const Locale('hi'),
+                isDark: isDark,
+              ),
+              _buildLanguageOption(
+                context: context,
+                flag: '🇮🇳',
+                language: 'ಕನ್ನಡ',
+                locale: const Locale('kn'),
+                isDark: isDark,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLanguageOption({
+    required BuildContext context,
+    required String flag,
+    required String language,
+    required Locale locale,
+    required bool isDark,
+  }) {
+    return InkWell(
+      onTap: () {
+        MyApp.setLocale(context, locale);
+        Navigator.pop(context);
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        margin: const EdgeInsets.only(bottom: 4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: const TextStyle(fontSize: 20)),
+            const SizedBox(width: 12),
+            Text(
+              language,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white : const Color(0xFF1E293B),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Navigate to Notepad Screen
+  void _openNotepad() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const NotepadScreen()),
     );
   }
 
@@ -534,30 +673,28 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildQuickActionsSection(AppLocalizations t, bool isDark) {
+    // Only Create and Code actions (removed Export and Share)
     final actions = [
       {
         'icon': Icons.add,
         'label': 'Create',
         'color': primaryColor,
-        'screen': const CreateProjectScreen(),
+        'onTap': () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CreateProjectScreen()),
+          );
+          // Refresh projects after returning from create screen
+          if (mounted) {
+            fetchMyProjects();
+          }
+        },
       },
       {
         'icon': Icons.code,
         'label': 'Code',
         'color': secondaryColor,
-        'screen': null,
-      },
-      {
-        'icon': Icons.cloud_upload,
-        'label': 'Export',
-        'color': accentColor,
-        'screen': null,
-      },
-      {
-        'icon': Icons.share,
-        'label': 'Share',
-        'color': warningColor,
-        'screen': null,
+        'onTap': _openNotepad,
       },
     ];
 
@@ -577,16 +714,7 @@ class _HomeScreenState extends State<HomeScreen>
           children: actions.map((action) {
             return Expanded(
               child: GestureDetector(
-                onTap: () {
-                  if (action['screen'] != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => action['screen'] as Widget,
-                      ),
-                    );
-                  }
-                },
+                onTap: action['onTap'] as VoidCallback,
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   padding: const EdgeInsets.symmetric(vertical: 10),
@@ -630,78 +758,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildServicesSection(AppLocalizations t, bool isDark) {
-    final services = [
-      {
-        'icon': Icons.web,
-        'label': t.websiteUI,
-        'color': const Color(0xFFEF4444),
-      },
-      {
-        'icon': Icons.phone_android,
-        'label': t.mobileUI,
-        'color': const Color(0xFF10B981),
-      },
-      {
-        'icon': Icons.dashboard,
-        'label': t.dashboardUI,
-        'color': const Color(0xFF3B82F6),
-      },
-      {
-        'icon': Icons.layers,
-        'label': t.components,
-        'color': const Color(0xFF8B5CF6),
-      },
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          t.services,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white : const Color(0xFF1E293B),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: services.map((service) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: (service['color'] as Color).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    service['icon'] as IconData,
-                    color: service['color'] as Color,
-                    size: 14,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    service['label'] as String,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white : const Color(0xFF1E293B),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
   Widget _buildTemplatesSection(AppLocalizations t, bool isDark) {
     final templates = [
       {
@@ -724,29 +780,14 @@ class _HomeScreenState extends State<HomeScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              t.templates,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
-              ),
-            ),
-            TextButton(
-              onPressed: () {},
-              child: Text(
-                'View All',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: primaryColor,
-                ),
-              ),
-            ),
-          ],
+        // Removed Row with View All button, just showing the title
+        Text(
+          t.templates,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : const Color(0xFF1E293B),
+          ),
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -840,30 +881,14 @@ class _HomeScreenState extends State<HomeScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              t.yourProjects,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
-              ),
-            ),
-            if (!isLoadingProjects && myProjects.isNotEmpty)
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'See All',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: primaryColor,
-                  ),
-                ),
-              ),
-          ],
+        // Removed Row with See All button, just showing the title
+        Text(
+          t.yourProjects,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : const Color(0xFF1E293B),
+          ),
         ),
         const SizedBox(height: 12),
         isLoadingProjects
@@ -1017,10 +1042,16 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CreateProjectScreen()),
-            ),
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CreateProjectScreen()),
+              );
+              // Refresh projects after returning from create screen
+              if (mounted) {
+                fetchMyProjects();
+              }
+            },
             icon: const Icon(Icons.add, size: 16),
             label: Text(t.createProject, style: const TextStyle(fontSize: 12)),
             style: ElevatedButton.styleFrom(
@@ -1029,6 +1060,227 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Notepad Screen for writing code
+class NotepadScreen extends StatefulWidget {
+  const NotepadScreen({super.key});
+
+  @override
+  State<NotepadScreen> createState() => _NotepadScreenState();
+}
+
+class _NotepadScreenState extends State<NotepadScreen> {
+  final TextEditingController _codeController = TextEditingController();
+  bool isDark = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isDark = prefs.getBool('isDarkMode') ?? false;
+    });
+  }
+
+  @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  void _copyToClipboard() {
+    Clipboard.setData(ClipboardData(text: _codeController.text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Code copied to clipboard!'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _clearCode() {
+    setState(() {
+      _codeController.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Code cleared!'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final Color primaryColor = const Color(0xFF6366F1);
+
+    return Scaffold(
+      backgroundColor: isDarkMode
+          ? const Color(0xFF0F172A)
+          : const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: const Text('Code Editor'),
+        backgroundColor: isDarkMode
+            ? const Color(0xFF0F172A)
+            : const Color(0xFFF8FAFC),
+        elevation: 0,
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.copy),
+            onPressed: _copyToClipboard,
+            tooltip: 'Copy Code',
+          ),
+          IconButton(
+            icon: const Icon(Icons.clear_all),
+            onPressed: _clearCode,
+            tooltip: 'Clear',
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Info Banner
+          Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [primaryColor, const Color(0xFF8B5CF6)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Write your code here. You can copy it to use later.',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Code Editor
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Editor Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.1),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEF4444),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF59E0B),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          'editor.dart',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: isDarkMode
+                                ? Colors.white70
+                                : Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Text Input Area
+                  Expanded(
+                    child: TextField(
+                      controller: _codeController,
+                      maxLines: null,
+                      expands: true,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'monospace',
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF1E293B),
+                      ),
+                      decoration: InputDecoration(
+                        hintText:
+                            '// Write your Flutter/Dart code here...\n\n// Example:\n// import \'package:flutter/material.dart\';\n// \n// class MyWidget extends StatelessWidget {\n//   @override\n//   Widget build(BuildContext context) {\n//     return Container();\n//   }\n// }',
+                        hintStyle: TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'monospace',
+                          color: isDarkMode
+                              ? Colors.grey.shade600
+                              : Colors.grey.shade400,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.all(16),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

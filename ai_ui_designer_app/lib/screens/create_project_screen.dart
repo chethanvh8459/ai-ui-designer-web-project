@@ -216,7 +216,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
 
                       // 3. Send to Node.js Backend
                       final response = await http.post(
-                        Uri.parse('http://127.0.0.1:5000/api/design/generate'),
+                        Uri.parse('https://internship-backend-api.vercel.app/api/design/generate'),
                         headers: {"Content-Type": "application/json"},
                         body: jsonEncode({
                           "email": userEmail,

@@ -113,7 +113,7 @@ class _SignupScreenState extends State<SignupScreen>
     try {
       final response = await http
           .post(
-            Uri.parse('http://127.0.0.1:5000/api/auth/signup'),
+           Uri.parse('https://internship-backend-api.vercel.app/api/auth/signup'),
             headers: {"Content-Type": "application/json"},
             body: jsonEncode({
               "username": username,
