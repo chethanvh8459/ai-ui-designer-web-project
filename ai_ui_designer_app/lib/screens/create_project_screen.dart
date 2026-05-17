@@ -8,7 +8,9 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CreateProjectScreen extends StatefulWidget {
-  const CreateProjectScreen({super.key});
+  final Map<String, dynamic>? templateData;
+  
+  const CreateProjectScreen({super.key, this.templateData});
 
   @override
   State<CreateProjectScreen> createState() => _CreateProjectScreenState();
@@ -20,7 +22,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
 
   late stt.SpeechToText _speech;
   bool isListening = false;
-  bool isGenerating = false; // 🔥 Added a loading state
+  bool isGenerating = false;
 
   File? selectedImage; 
 
@@ -28,9 +30,37 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
+    _loadTemplateData();
+  }
+  
+  void _loadTemplateData() {
+    if (widget.templateData != null) {
+      final template = widget.templateData!;
+      
+      String projectName = template['title'] ?? 'Template Project';
+      if (!projectName.endsWith(' App') && !projectName.endsWith(' app')) {
+        projectName = '$projectName App';
+      }
+      nameController.text = projectName;
+      
+      if (template['prompt'] != null) {
+        promptController.text = template['prompt'];
+      }
+      
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${template['title']} template loaded! You can modify the prompt before generating.'),
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      });
+    }
   }
 
-  // 🎤 VOICE
   void _toggleListening() async {
     if (!isListening) {
       bool available = await _speech.initialize();
@@ -52,7 +82,6 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     }
   }
 
-  // 📷 IMAGE PICKER
   Future<void> pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
@@ -65,21 +94,52 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   }
 
   @override
+  void dispose() {
+    nameController.dispose();
+    promptController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(t.createProject),
+        actions: widget.templateData != null ? [
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: (widget.templateData!['color'] as Color?) ?? Colors.purple,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.style, color: Colors.white, size: 16), // Changed from Icons.template
+                const SizedBox(width: 4),
+                Text(
+                  widget.templateData!['title'] ?? 'Template',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] : null,
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
-        child: SingleChildScrollView( // Added scroll view to prevent overflow
+        child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              // 🔹 PROJECT NAME
               TextField(
                 controller: nameController,
                 decoration: InputDecoration(
@@ -87,12 +147,12 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  hintText: widget.templateData != null ? 'E.g., My E-Commerce App' : null,
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              // 🔹 TITLE
               Text(
                 t.describeUI,
                 style: const TextStyle(
@@ -103,7 +163,6 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
 
               const SizedBox(height: 10),
 
-              // 🔥 PROMPT BOX
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -115,19 +174,19 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                 child: Column(
                   children: [
 
-                    // ✏️ TEXT INPUT
                     TextField(
                       controller: promptController,
                       maxLines: 6,
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        hintText: "${t.describeUI}...\n${t.projectName}",
+                        hintText: widget.templateData != null 
+                            ? "Modify the template prompt or add more details...\n\nExample: Add dark mode, responsive design, etc."
+                            : "${t.describeUI}...\n${t.projectName}",
                       ),
                     ),
 
                     const SizedBox(height: 10),
 
-                    // 🔥 IMAGE PREVIEW
                     if (selectedImage != null) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
@@ -141,14 +200,12 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                       const SizedBox(height: 10),
                     ],
 
-                    // 🔥 ACTION ROW (IMAGE + MIC)
                     Align(
                       alignment: Alignment.centerRight,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
 
-                          // 📷 IMAGE BUTTON
                           GestureDetector(
                             onTap: pickImage,
                             child: CircleAvatar(
@@ -163,7 +220,6 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
 
                           const SizedBox(width: 10),
 
-                          // 🎤 MIC BUTTON
                           GestureDetector(
                             onTap: _toggleListening,
                             child: CircleAvatar(
@@ -185,7 +241,39 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
 
               const SizedBox(height: 30),
 
-              // 🔥 GENERATE BUTTON
+              if (widget.templateData != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: (widget.templateData!['color'] as Color?)?.withOpacity(0.1) ?? Colors.purple.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: (widget.templateData!['color'] as Color?) ?? Colors.purple,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: widget.templateData!['color'] as Color? ?? Colors.purple,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'This is a pre-designed template. You can customize the prompt above to add your specific requirements.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -200,7 +288,6 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                       return;
                     }
 
-                    // 1. Show loading state
                     setState(() {
                       isGenerating = true;
                     });
@@ -210,11 +297,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                     );
 
                     try {
-                      // 2. Get the logged-in user's email
                       final prefs = await SharedPreferences.getInstance();
                       String userEmail = prefs.getString("userEmail") ?? "anonymous";
 
-                      // 3. Send to Node.js Backend
                       final response = await http.post(
                         Uri.parse('https://internship-backend-api.vercel.app/api/design/generate'),
                         headers: {"Content-Type": "application/json"},
@@ -228,16 +313,14 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                       var data = jsonDecode(response.body);
 
                       if (response.statusCode == 200) {
-                        // Success! The code is in data['code']
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("✅ UI Generated and Saved to Database!")),
                         );
                         
-                        // You can print it to the console to verify
                         print("GENERATED CODE:\n" + data['code']);
                         
-                        Navigator.pop(context); // Go back to dashboard
+                        Navigator.pop(context, true);
                       } else {
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -259,7 +342,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                   },
 
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A1A2E),
+                    backgroundColor: widget.templateData != null 
+                        ? (widget.templateData!['color'] as Color?) ?? const Color(0xFF1A1A2E)
+                        : const Color(0xFF1A1A2E),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -270,7 +355,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                   child: isGenerating 
                       ? const CircularProgressIndicator(color: Colors.white) 
                       : Text(
-                          t.generateUI,
+                          widget.templateData != null 
+                              ? 'Generate ${widget.templateData!['title']} App'
+                              : t.generateUI,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -278,6 +365,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                         ),
                 ),
               ),
+              
+              const SizedBox(height: 20),
             ],
           ),
         ),

@@ -5,6 +5,8 @@ import 'utils/theme_provider.dart';
 import 'screens/welcome_screen.dart';
 import 'package:ai_ui_designer_app/l10n/app_localizations.dart';
 import 'package:stac/stac.dart';
+import 'screens/login_screen.dart'; 
+import 'screens/home_screen.dart';
 // 🔥 ONLY ONE MAIN FUNCTION
 void main() async {
   // 1. Ensure Flutter bindings are ready
@@ -111,7 +113,12 @@ darkTheme: ThemeData(
 ),
       themeMode: themeProvider.currentTheme,
 
-      home: const WelcomeScreen(),
+     initialRoute: '/',
+      routes: {
+        '/': (context) => const WelcomeScreen(),     // Main link -> Get Started
+        '/login': (context) => const LoginScreen(),  // /login link -> Login Page
+        '/home': (context) => const HomeScreen(),    // /home link -> Dashboard
+      },
     );
   }
 }

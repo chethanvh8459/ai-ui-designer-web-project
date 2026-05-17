@@ -26,6 +26,14 @@ class _HomeScreenState extends State<HomeScreen>
   bool isLoadingProjects = true;
   String? userName;
 
+  // 🔥 Point 3: Live Variables for Dashboard Stats
+  final int maxCredits = 10;
+  int get totalProjects => myProjects.length;
+  int get availableCredits {
+    int remaining = maxCredits - totalProjects;
+    return remaining < 0 ? 0 : remaining;
+  }
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -113,11 +121,62 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
+  // 🔥 Helper method for the new Stat Cards
+  Widget _buildStatCard({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color bgColor,
+    required Color iconColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: iconColor.withOpacity(0.2)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final t = AppLocalizations.of(context)!;
-    final isDark = themeProvider.isDarkMode;
+
+    // We use the getter from your updated ThemeProvider
+    final isDark = themeProvider.currentTheme == ThemeMode.dark;
 
     return Scaffold(
       backgroundColor: isDark
@@ -212,7 +271,8 @@ class _HomeScreenState extends State<HomeScreen>
                       onSelected: (value) async {
                         switch (value) {
                           case 'dark_mode':
-                            themeProvider.toggleTheme(!isDark);
+                            // Uses the updated toggleTheme logic
+                            themeProvider.toggleTheme();
                             break;
                           case 'language':
                             _showLanguageDialog(context, isDark);
@@ -326,19 +386,41 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         const SizedBox(height: 24),
 
-                        // Stats Row
-                        _buildStatsRow(t, isDark),
+                        // 🔥 LIVE Stats Row - Rate option removed
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatCard(
+                                icon: Icons.folder_outlined,
+                                value: totalProjects.toString(),
+                                label: "Projects",
+                                bgColor: const Color(0xFFEEF2FF),
+                                iconColor: const Color(0xFF6366F1),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildStatCard(
+                                icon: Icons.star_border,
+                                value: availableCredits.toString(),
+                                label: "Credits",
+                                bgColor: const Color(0xFFECFDF5),
+                                iconColor: const Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 32),
 
-                        // Quick Actions (Only Create and Code)
+                        // Quick Actions
                         _buildQuickActionsSection(t, isDark),
                         const SizedBox(height: 32),
 
-                        // Templates Section (without View All button)
+                        // Templates Section
                         _buildTemplatesSection(t, isDark),
                         const SizedBox(height: 32),
 
-                        // Projects Section (without See All button)
+                        // Projects Section
                         _buildProjectsSection(t, isDark),
                         const SizedBox(height: 80),
                       ],
@@ -569,123 +651,20 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildStatsRow(AppLocalizations t, bool isDark) {
-    final stats = [
-      {
-        'icon': Icons.folder_outlined,
-        'label': 'Projects',
-        'value': myProjects.length.toString(),
-        'color': primaryColor,
-        'gradient': [primaryColor, secondaryColor],
-      },
-      {
-        'icon': Icons.star_outline,
-        'label': 'Credits',
-        'value': '245',
-        'color': accentColor,
-        'gradient': [accentColor, const Color(0xFF34D399)],
-      },
-      {
-        'icon': Icons.trending_up,
-        'label': 'Rate',
-        'value': '92%',
-        'color': warningColor,
-        'gradient': [warningColor, const Color(0xFFFBBF24)],
-      },
-    ];
-
-    return Row(
-      children: stats.map((stat) {
-        return Expanded(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            child: TweenAnimationBuilder(
-              tween: Tween<double>(begin: 0, end: 1),
-              duration: Duration(
-                milliseconds: 400 + (stats.indexOf(stat) * 100),
-              ),
-              builder: (context, value, child) {
-                return Transform.scale(scale: value, child: child);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 8,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      (stat['color'] as Color).withOpacity(0.1),
-                      (stat['color'] as Color).withOpacity(0.05),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: (stat['color'] as Color).withOpacity(0.2),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: stat['gradient'] as List<Color>,
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        stat['icon'] as IconData,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      stat['value'] as String,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF1E293B),
-                      ),
-                    ),
-                    Text(
-                      stat['label'] as String,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark
-                            ? Colors.grey.shade400
-                            : Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
   Widget _buildQuickActionsSection(AppLocalizations t, bool isDark) {
-    // Only Create and Code actions (removed Export and Share)
+    // Only Create and Code actions
     final actions = [
       {
         'icon': Icons.add,
         'label': 'Create',
         'color': primaryColor,
         'onTap': () async {
-          await Navigator.push(
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const CreateProjectScreen()),
           );
           // Refresh projects after returning from create screen
-          if (mounted) {
+          if (mounted && result == true) {
             fetchMyProjects();
           }
         },
@@ -764,23 +743,25 @@ class _HomeScreenState extends State<HomeScreen>
         'title': 'E-Commerce',
         'image': 'https://picsum.photos/id/20/200/300',
         'color': const Color(0xFFEF4444),
+        'prompt': 'Create a modern e-commerce app with product listing, shopping cart, user authentication, and payment integration. Include product search, filters, order tracking, and a user reviews section. Make it responsive with smooth animations.',
       },
       {
         'title': 'Portfolio',
         'image': 'https://picsum.photos/id/30/200/300',
         'color': const Color(0xFF3B82F6),
+        'prompt': 'Create a professional portfolio app for a creative professional. Include sections for about me, project showcase, skills, testimonials, contact form, and a blog section. Make it visually impressive with smooth transitions and animations.',
       },
       {
         'title': 'Dashboard',
         'image': 'https://picsum.photos/id/40/200/300',
         'color': const Color(0xFF10B981),
+        'prompt': 'Create an admin dashboard with analytics charts, user management, sales data visualization, recent activities, notification system, and settings page. Include dark mode support and fully responsive design.',
       },
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Removed Row with View All button, just showing the title
         Text(
           t.templates,
           style: TextStyle(
@@ -797,77 +778,90 @@ class _HomeScreenState extends State<HomeScreen>
             itemCount: templates.length,
             itemBuilder: (context, index) {
               final template = templates[index];
-              return Container(
-                width: 130,
-                margin: const EdgeInsets.only(right: 12),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(12),
+              return GestureDetector(
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CreateProjectScreen(
+                        templateData: template,
                       ),
-                      child: Image.network(
-                        template['image'] as String,
-                        height: 90,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+                    ),
+                  );
+                  if (mounted && result == true) {
+                    fetchMyProjects();
+                  }
+                },
+                child: Container(
+                  width: 130,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(12),
+                        ),
+                        child: Image.network(
+                          template['image'] as String,
                           height: 90,
-                          color: Colors.grey.shade200,
-                          child: const Icon(Icons.error, size: 30),
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 90,
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.style, size: 40), // Changed from Icons.template
+                          ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            template['title'] as String,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF1E293B),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: (template['color'] as Color).withOpacity(
-                                0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'Template',
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              template['title'] as String,
                               style: TextStyle(
-                                fontSize: 9,
-                                color: template['color'] as Color,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF1E293B),
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 2),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (template['color'] as Color).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'Template',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: template['color'] as Color,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },
@@ -881,7 +875,6 @@ class _HomeScreenState extends State<HomeScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Removed Row with See All button, just showing the title
         Text(
           t.yourProjects,
           style: TextStyle(
@@ -1043,12 +1036,11 @@ class _HomeScreenState extends State<HomeScreen>
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: () async {
-              await Navigator.push(
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CreateProjectScreen()),
               );
-              // Refresh projects after returning from create screen
-              if (mounted) {
+              if (mounted && result == true) {
                 fetchMyProjects();
               }
             },
@@ -1079,20 +1071,6 @@ class NotepadScreen extends StatefulWidget {
 
 class _NotepadScreenState extends State<NotepadScreen> {
   final TextEditingController _codeController = TextEditingController();
-  bool isDark = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTheme();
-  }
-
-  Future<void> _loadTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      isDark = prefs.getBool('isDarkMode') ?? false;
-    });
-  }
 
   @override
   void dispose() {
@@ -1125,7 +1103,7 @@ class _NotepadScreenState extends State<NotepadScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.isDarkMode;
+    final isDarkMode = themeProvider.currentTheme == ThemeMode.dark;
     final Color primaryColor = const Color(0xFF6366F1);
 
     return Scaffold(

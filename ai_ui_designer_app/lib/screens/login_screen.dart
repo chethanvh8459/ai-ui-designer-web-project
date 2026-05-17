@@ -23,11 +23,9 @@ class _LoginScreenState extends State<LoginScreen>
   bool isLoading = false;
   bool obscurePassword = true;
 
-  String selectedLevel = "Beginner";
-  final List<String> levels = ["Beginner", "Intermediate", "Advanced"];
-
+  // Role Dropdown Variables (Only Student and Developer)
   String selectedRole = "Student";
-  final List<String> roles = ["Student", "Developer", "Senior Developer"];
+  final List<String> roles = ["Student", "Developer"];
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -111,8 +109,7 @@ class _LoginScreenState extends State<LoginScreen>
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString("userEmail", data['data']['email']);
         await prefs.setString("userName", data['data']['username']);
-        await prefs.setString("userLevel", selectedLevel);
-        await prefs.setString("userRole", selectedRole);
+        await prefs.setString("userRole", selectedRole); // Removed Level saving
 
         if (!mounted) return;
 
@@ -132,10 +129,11 @@ class _LoginScreenState extends State<LoginScreen>
         );
       }
     } catch (e) {
+      // 🔥 THIS IS THE MAGIC DEBUGGING BLOCK 🔥
+      debugPrint("🚨 ACTUAL LOGIN ERROR: $e"); 
+      
       _showSnackBar(
-        e.toString().contains("Timeout")
-            ? "Connection timeout. Please check your server."
-            : "Server error. Please make sure the backend is running.",
+        "Real Error: ${e.toString()}", 
         isError: true,
       );
     } finally {
@@ -297,8 +295,7 @@ class _LoginScreenState extends State<LoginScreen>
                                         size: 20,
                                       ),
                                       onPressed: () => setState(
-                                        () =>
-                                            obscurePassword = !obscurePassword,
+                                        () => obscurePassword = !obscurePassword,
                                       ),
                                     ),
                                     border: OutlineInputBorder(
@@ -309,48 +306,6 @@ class _LoginScreenState extends State<LoginScreen>
                                       vertical: 16,
                                     ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-
-                              // Experience Level Dropdown
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade50,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: Colors.grey.shade200,
-                                  ),
-                                ),
-                                child: DropdownButtonFormField<String>(
-                                  value: selectedLevel,
-                                  isExpanded: true,
-                                  decoration: InputDecoration(
-                                    hintText: "Experience Level",
-                                    prefixIcon: Icon(
-                                      Icons.trending_up,
-                                      color: primaryColor,
-                                      size: 22,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 4,
-                                    ),
-                                  ),
-                                  items: levels.map((level) {
-                                    return DropdownMenuItem(
-                                      value: level,
-                                      child: Text(level),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    if (value != null)
-                                      setState(() => selectedLevel = value);
-                                  },
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -390,8 +345,9 @@ class _LoginScreenState extends State<LoginScreen>
                                     );
                                   }).toList(),
                                   onChanged: (value) {
-                                    if (value != null)
+                                    if (value != null) {
                                       setState(() => selectedRole = value);
+                                    }
                                   },
                                 ),
                               ),
@@ -445,8 +401,8 @@ class _LoginScreenState extends State<LoginScreen>
                                             strokeWidth: 2,
                                             valueColor:
                                                 AlwaysStoppedAnimation<Color>(
-                                                  Colors.white,
-                                                ),
+                                              Colors.white,
+                                            ),
                                           ),
                                         )
                                       : const Text(
